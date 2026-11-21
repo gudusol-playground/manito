@@ -1,0 +1,17 @@
+{
+  "name": "bc-useful-gifts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.mjs",
+    "draw:init": "node scripts/manage.mjs init",
+    "links": "node scripts/manage.mjs links",
+    "photos:update": "node scripts/manage.mjs photos"
+  },
+  "dependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" },
+  "devDependencies": { "@types/react": "^19.0.0", "@types/react-dom": "^19.0.0", "typescript": "~5.9.3", "vite": "^6.4.1" }
+}
