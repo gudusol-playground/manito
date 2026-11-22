@@ -8,20 +8,18 @@ type Stage = 'loading' | 'invitation' | 'ready' | 'opening' | 'revealed' | 'erro
 function FriendsBanner({ opening }: { opening: boolean }) {
   const [paused, setPaused] = useState(false);
   return <section className={`friends-banner ${paused || opening ? 'is-paused' : ''}`} aria-labelledby="friends-heading">
-    <div className="friends-heading"><div><span className="friends-kicker">우리 동기들</span><h2 id="friends-heading">이 중에 내 선물 상대는?</h2></div>
+    <div className="friends-heading"><h2 id="friends-heading">이 중에 내 선물 상대는?</h2>
       <button className="banner-toggle" onClick={() => setPaused(value => !value)} aria-pressed={paused} disabled={opening}>{paused ? '▶ 사진 움직이기' : 'Ⅱ 사진 멈추기'}</button>
     </div>
-    <div className="friends-window" tabIndex={0} role="group" aria-label="동기 사진 배너. 마우스를 올리거나 키보드로 선택하면 움직임이 멈춥니다.">
+    <div className="friends-window" tabIndex={0} role="group" aria-label="동기 사진 배너. 사진 멈추기 버튼으로 움직임을 멈출 수 있습니다.">
       <div className="friends-track">
         {[0, 1].map(copy => <div className="friends-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
           {friends.map((friend, index) => <figure className="friend-photo" key={friend.name} style={{ '--tilt': `${[ -4, 3, -2, 4, -3 ][index % 5]}deg` } as CSSProperties}>
-            <img src={friend.src} alt={copy === 0 ? `${friend.name}님` : ''} width="110" height="110" decoding="async" />
-            <figcaption>{friend.name}</figcaption>
+            <img src={friend.src} alt={copy === 0 ? `동기 사진 ${index + 1}` : ''} width="148" height="148" decoding="async" />
           </figure>)}
         </div>)}
       </div>
     </div>
-    <p className="friends-caption">이번 선물 교환에 함께하지 못하는 동기들의 사진도 담았어요.</p>
   </section>;
 }
 
@@ -163,20 +161,20 @@ export default function App() {
           <div className="art-label"><span className="tiny-gift">✳</span> A GIFT FOR YOU</div>
           {revealed && assignment ? <div className="portrait-wrap">
             <div className="portrait-ring"><div className="portrait">{assignment.photo && !photoFailed ? <img src={assignment.photo} alt={`${assignment.recipient}님의 사진`} onError={() => setPhotoFailed(true)} /> : <Avatar />}</div></div>
-            <span className="portrait-seal">YOUR<br />MANITTO<span>♥</span></span>
+            <span className="portrait-seal">YOUR MANITTO <span>♥</span></span>
             <Sparkle className="portrait-spark" />
-            <p className="portrait-caption">올겨울, 당신의 마음이 닿을 사람</p>
           </div> : <Gift opening={opening} />}
         </div>
 
         <div className="card-content">
-          <div className="letter-top"><span className="section-label">{revealed ? 'THE SECRET IS OUT' : 'A SECRET INVITATION'}</span></div>
+          {!revealed && <div className="letter-top"><span className="section-label">A SECRET INVITATION</span></div>}
           {revealed && assignment ? <div className="result-copy">
             <span className="recipient-label">{assignment.sender}님이 선물할 상대는</span>
             <h2 ref={revealHeading} tabIndex={-1} className="recipient-name">{assignment.recipient}<span>님</span><Sparkle /></h2>
             <div className="result-guide">
-              <p><strong>12월 5일 MT</strong>에 선물을 가져와 상대에게 직접 전해주세요.</p>
-              <p>예산은 <strong>3만 원 미만</strong>이에요. 너무 부담 갖지 말고, 상대에게 쓸모 있을 것 같은 선물로 편하게 준비해 주세요.</p>
+              <p><strong>12월 5일 MT</strong>에 선물을 가져와 상대에게 전해주세요.</p>
+              <p>예산은 <strong>3만 원 미만</strong>이에요.</p>
+              <p>부담 갖지 말고, 상대에게 쓸모 있을 것 같은 선물로 편하게 준비해 주세요.</p>
             </div>
             <div className="saved-note"><CheckIcon /> 다시 들어와도 같은 상대를 확인할 수 있어요.</div>
           </div> : <div className="invitation-copy">
@@ -185,7 +183,7 @@ export default function App() {
             <p>상자를 열고 선물할 상대를 확인해 주세요.</p>
             {stage === 'error' ? <div className="error-note" role="alert"><strong>초대 링크를 확인해 주세요.</strong><span>링크가 올바르지 않거나 결과를 불러오지 못했어요. 전달받은 링크 전체를 다시 열어주세요.</span><button className="retry-button" onClick={() => window.location.reload()}>다시 시도</button></div> : stage === 'invitation' ? <><div className="invitation-notice"><GiftIcon /> 개인 초대 링크로 접속해 주세요</div><p className="private-note">진행자가 보내준 개인 링크로 상대를 확인할 수 있어요.</p></> : <><button className="open-button" onClick={openGift} disabled={stage !== 'ready'}><GiftIcon />{stage === 'loading' ? '초대장을 확인하고 있어요' : opening ? '두근두근, 열리는 중…' : '내가 선물할 상대 확인하기'}<Sparkle /></button><p className="private-note"><LockIcon /> 나에게만 전해진 비밀 초대장이에요.</p></>}
           </div>}
-          <div className="letter-bottom"><span>작은 선물에, 커다란 마음을.</span><span className="handwritten">with love, BC</span></div>
+          <div className="letter-bottom"><span className="handwritten">with love, BC</span></div>
         </div>
         {revealed && <Confetti />}
         <div className="sr-only" role="status" aria-live="polite">{opening ? '선물 상자가 열리고 있습니다.' : stage === 'loading' ? '초대장을 확인하고 있습니다.' : ''}</div>
@@ -193,7 +191,7 @@ export default function App() {
 
       {(stage === 'invitation' || stage === 'error') && <p className="link-help">개인 초대 링크가 없거나 열리지 않나요? 진행자에게 링크를 다시 요청해 주세요.</p>}
     </main>
-    <footer><span>BC CARD · 2025 하반기 동기들</span><span>우리의 겨울에, 작은 즐거움 하나 <span className="footer-heart">♥</span></span></footer>
+    <footer><span>BC CARD · 2025 하반기 동기들</span></footer>
   </div>;
 }
 
