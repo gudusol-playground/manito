@@ -1,8 +1,29 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { decrypt, parseFragment } from '../shared/crypto.mjs';
+import friends from './data/friends.json';
 
 type Assignment = { sender: string; recipient: string; photo: string | null };
 type Stage = 'loading' | 'invitation' | 'ready' | 'opening' | 'revealed' | 'error';
+
+function FriendsBanner({ opening }: { opening: boolean }) {
+  const [paused, setPaused] = useState(false);
+  return <section className={`friends-banner ${paused || opening ? 'is-paused' : ''}`} aria-labelledby="friends-heading">
+    <div className="friends-heading"><div><span className="friends-kicker">우리 동기들</span><h2 id="friends-heading">이 중에 내 선물 상대는?</h2></div>
+      <button className="banner-toggle" onClick={() => setPaused(value => !value)} aria-pressed={paused} disabled={opening}>{paused ? '▶ 사진 움직이기' : 'Ⅱ 사진 멈추기'}</button>
+    </div>
+    <div className="friends-window" tabIndex={0} role="group" aria-label="동기 사진 배너. 마우스를 올리거나 키보드로 선택하면 움직임이 멈춥니다.">
+      <div className="friends-track">
+        {[0, 1].map(copy => <div className="friends-group" key={copy} aria-hidden={copy === 1 ? true : undefined}>
+          {friends.map((friend, index) => <figure className="friend-photo" key={friend.name} style={{ '--tilt': `${[ -4, 3, -2, 4, -3 ][index % 5]}deg` } as CSSProperties}>
+            <img src={friend.src} alt={copy === 0 ? `${friend.name}님` : ''} width="110" height="110" decoding="async" />
+            <figcaption>{friend.name}</figcaption>
+          </figure>)}
+        </div>)}
+      </div>
+    </div>
+    <p className="friends-caption">이번 선물 교환에 함께하지 못하는 동기들의 사진도 담았어요.</p>
+  </section>;
+}
 
 function Sparkle({ className = '' }: { className?: string }) {
   return <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 1c1.6 8 2.8 9.4 11 11-8.2 1.6-9.4 3-11 11C10.4 15 9.2 13.6 1 12 9.2 10.4 10.4 9 12 1Z" fill="currentColor" /></svg>;
@@ -134,6 +155,8 @@ export default function App() {
         <h1 id="page-title">쓸데있는<br className="mobile-break" /> <span>선물 교환<svg viewBox="0 0 360 16" preserveAspectRatio="none" aria-hidden="true"><path d="M3 12C94 2 227 1 357 8" /></svg></span><Sparkle className="title-spark" /></h1>
         <p>함께라서 더 따뜻한 12월.<br className="mobile-break" /> 서로에게 쓸모 있는 마음을 선물해요.</p>
       </section>
+
+      {!revealed && <FriendsBanner opening={opening} />}
 
       <section className={`invitation-card ${revealed ? 'has-revealed' : ''} ${opening ? 'is-opening' : ''}`} aria-label="나의 마니또 초대장">
         <div className="card-art">

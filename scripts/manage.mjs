@@ -3,6 +3,7 @@ import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { draw, participants } from './draw.mjs';
 import { randomToken, encrypt, decrypt } from '../shared/crypto.mjs';
+import { findPhoto, preparePhoto, galleryOnly } from './photos.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const privateDir = join(root, '.private');
@@ -39,21 +40,24 @@ async function main() {
     const photoDir = resolve(process.argv[3]);
     const files = await readdir(photoDir);
     const photos = new Map();
-    for (const name of participants) {
-      const matches = files.filter(file => ['.jpg', '.jpeg', '.png', '.webp'].some(ext => file === name + ext));
-      if (matches.length > 1) throw new Error(`${name} 사진은 하나만 제공하세요.`);
-      if (matches.length === 1) {
-        const file = matches[0];
+    const thumbnails = [];
+    const galleryPath = join(root, 'src', 'data', 'friends.json');
+    const gallery = await exists(galleryPath) ? JSON.parse(await readFile(galleryPath, 'utf8')) : [];
+    const names = [...participants, ...galleryOnly].sort((a, b) => a.localeCompare(b, 'ko'));
+    for (const [index, name] of names.entries()) {
+      const file = findPhoto(files, name);
+      if (file) {
         const bytes = await readFile(join(photoDir, file));
-        if (bytes.length > 2 * 1024 * 1024) throw new Error(`${name} 사진은 2MB 이하로 줄여 주세요.`);
-        const ext = file.split('.').pop();
-        const mime = ext === 'jpg' || ext === 'jpeg' ? 'jpeg' : ext;
-        const valid = mime === 'jpeg' ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255 : mime === 'png' ? bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) : bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
-        if (!valid) throw new Error(`${name} 사진 형식을 확인하세요.`);
-        photos.set(name, `data:image/${mime};base64,${bytes.toString('base64')}`);
+        const { portrait, thumbnail } = await preparePhoto(bytes);
+        if (participants.includes(name)) photos.set(name, `data:image/webp;base64,${portrait.toString('base64')}`);
+        const src = `/friends/${String(index + 1).padStart(2, '0')}.webp`;
+        thumbnails.push([join(root, 'public', src), thumbnail]);
+        const entry = { name, src };
+        const existing = gallery.findIndex(item => item.name === name);
+        if (existing === -1) gallery.push(entry); else gallery[existing] = entry;
       }
     }
-    if (!photos.size) throw new Error('이름.jpg, 이름.png 또는 이름.webp 형식의 사진이 없습니다.');
+    if (!thumbnails.length) throw new Error('이름.jpg, 이름.png 또는 이름.webp 형식의 사진이 없습니다.');
     const deliveries = JSON.parse(await readFile(manifestPath, 'utf8'));
     const updates = [];
     for (const { id, key } of deliveries) {
@@ -64,8 +68,13 @@ async function main() {
         updates.push([path, JSON.stringify(await encrypt(payload, key))]);
       }
     }
+    await mkdir(join(root, 'public', 'friends'), { recursive: true });
+    await mkdir(join(root, 'src', 'data'), { recursive: true });
+    for (const [path, bytes] of thumbnails) await writeFile(path, bytes);
+    gallery.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    await writeFile(galleryPath, JSON.stringify(gallery, null, 2) + '\n');
     for (const [path, contents] of updates) await writeFile(path, contents);
-    console.log(`${updates.length}개의 사진을 암호화해 교체했습니다. 매칭과 개인 링크는 유지됩니다.`);
+    console.log(`상대 사진 ${updates.length}개를 암호화하고, 공개 배너 사진 ${thumbnails.length}개를 준비했습니다. 매칭과 개인 링크는 유지됩니다.`);
   } else {
     throw new Error('지원 명령: init, links [사이트 주소], photos <사진 폴더>');
   }
