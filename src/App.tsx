@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { decrypt, parseFragment } from '../shared/crypto.mjs';
 import friends from './data/friends.json';
 
-type Assignment = { sender: string; recipient: string; photo: string | null };
+type Assignment = { sender: string; recipient: string; photo: string | null; specialExchange?: boolean };
 type Stage = 'loading' | 'invitation' | 'ready' | 'opening' | 'revealed' | 'error';
 
 function FriendsBanner({ opening }: { opening: boolean }) {
@@ -172,7 +172,7 @@ export default function App() {
             <span className="recipient-label">{assignment.sender}님이 선물할 상대는</span>
             <h2 ref={revealHeading} tabIndex={-1} className="recipient-name">{assignment.recipient}<span>님</span><Sparkle /></h2>
             <div className="result-guide">
-              <p><strong>12월 5일 MT</strong>에 선물을 가져와 상대에게 전해주세요.</p>
+              {assignment.specialExchange ? <p>MT에 함께하지 못하는 두 분을 위한 <strong>특별 선물 교환</strong>이에요. 선물 전달 일정은 서로 편하게 정해주세요.</p> : <p><strong>12월 5일 MT</strong>에 선물을 가져와 상대에게 전해주세요.</p>}
               <p>예산은 <strong>3만 원 미만</strong>이에요.</p>
               <p>부담 갖지 말고, 상대에게 쓸모 있을 것 같은 선물로 편하게 준비해 주세요.</p>
             </div>

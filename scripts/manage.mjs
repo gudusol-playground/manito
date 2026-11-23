@@ -1,9 +1,9 @@
 import { mkdir, readFile, writeFile, access, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { draw, participants } from './draw.mjs';
+import { drawEvent, participants } from './draw.mjs';
 import { randomToken, encrypt, decrypt } from '../shared/crypto.mjs';
-import { findPhoto, preparePhoto, galleryOnly } from './photos.mjs';
+import { findPhoto, preparePhoto } from './photos.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const privateDir = join(root, '.private');
@@ -18,7 +18,7 @@ async function main() {
     await mkdir(privateDir, { recursive: true, mode: 0o700 });
     await mkdir(publicDir, { recursive: true });
     const deliveries = [];
-    for (const result of draw(participants)) {
+    for (const result of drawEvent()) {
       const id = randomToken(16);
       const key = randomToken();
       const envelope = await encrypt(result, key);
@@ -27,7 +27,7 @@ async function main() {
     }
     deliveries.sort((a, b) => participants.indexOf(a.name) - participants.indexOf(b.name));
     await writeFile(manifestPath, JSON.stringify(deliveries, null, 2), { flag: 'wx', mode: 0o600 });
-    console.log('16명의 고정 매칭을 생성했습니다. 결과는 공개하지 않았습니다. .private 폴더를 안전하게 백업하세요.');
+    console.log('17명 무작위 및 2명 특별 고정 매칭을 생성했습니다. 결과는 공개하지 않았습니다. .private 폴더를 안전하게 백업하세요.');
   } else if (command === 'links') {
     const url = new URL(process.argv[3] || 'http://localhost:5173');
     if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new Error('사이트의 기본 주소만 입력하세요. 예: https://example.vercel.app');
@@ -43,7 +43,7 @@ async function main() {
     const thumbnails = [];
     const galleryPath = join(root, 'src', 'data', 'friends.json');
     const gallery = await exists(galleryPath) ? JSON.parse(await readFile(galleryPath, 'utf8')) : [];
-    const names = [...participants, ...galleryOnly].sort((a, b) => a.localeCompare(b, 'ko'));
+    const names = [...participants].sort((a, b) => a.localeCompare(b, 'ko'));
     for (const [index, name] of names.entries()) {
       const file = findPhoto(files, name);
       if (file) {

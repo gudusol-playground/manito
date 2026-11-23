@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import sharp from 'sharp';
-import { findPhoto, preparePhoto, galleryOnly } from '../scripts/photos.mjs';
+import { findPhoto, preparePhoto } from '../scripts/photos.mjs';
 import { participants } from '../scripts/draw.mjs';
 import { decrypt } from '../shared/crypto.mjs';
 
@@ -27,10 +27,10 @@ test('photo preparation auto-orients, bounds size, and removes source metadata',
   await assert.rejects(() => preparePhoto(Buffer.from('invalid photo')));
 });
 
-test('19 banner photos exist while all 16 private results remain participant-only with photos', async () => {
+test('19 banner photos exist while all 19 private results remain participant-only with photos', async () => {
   const gallery = JSON.parse(await readFile(new URL('../src/data/friends.json', import.meta.url), 'utf8'));
   assert.equal(gallery.length, 19);
-  assert.deepEqual(gallery.map(item => item.name).sort(), [...participants, ...galleryOnly].sort());
+  assert.deepEqual(gallery.map(item => item.name).sort(), [...participants].sort());
   for (const item of gallery) {
     const bytes = await readFile(new URL(`../public${item.src}`, import.meta.url));
     assert.equal((await sharp(bytes).metadata()).format, 'webp');
@@ -40,8 +40,7 @@ test('19 banner photos exist while all 16 private results remain participant-onl
   for (const { id, key } of deliveries) {
     const envelope = JSON.parse(await readFile(new URL(`../public/results/${id}.json`, import.meta.url), 'utf8'));
     const result = await decrypt(envelope, key);
-    assert.ok(participants.includes(result.recipient), 'Recipient must be one of the 16 participants');
-    assert.ok(!galleryOnly.includes(result.recipient), 'Banner-only friends cannot be recipients');
+    assert.ok(participants.includes(result.recipient), 'Recipient must be one of the 19 participants');
     assert.ok(result.photo?.startsWith('data:image/webp;base64,'), 'Every recipient must have a photo');
     const metadata = await sharp(Buffer.from(result.photo.split(',')[1], 'base64')).metadata();
     assert.ok(metadata.width <= 800 && metadata.height <= 1000);

@@ -1,7 +1,5 @@
 import sharp from 'sharp';
 
-// These people appear in the shared banner only; never add them to draw.mjs.
-export const galleryOnly = ['박세은', '이동재', '홍민화'];
 
 export function findPhoto(files, name) {
   const matches = files.filter(file => ['.jpg', '.jpeg', '.png', '.webp'].some(ext => file.normalize('NFC').toLowerCase() === name.normalize('NFC') + ext));

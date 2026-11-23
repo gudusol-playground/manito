@@ -1,6 +1,14 @@
 import { randomInt } from 'node:crypto';
 
-export const participants = ['구본혁', '김서하', '김소현', '김정윤', '박영규', '서재운', '이서현', '이성훈', '이세훈', '이태검', '장휘정', '정기민', '최수빈', '최원영', '최민준', '유태승'];
+export const randomParticipants = ['구본혁', '김서하', '김소현', '김정윤', '박영규', '서재운', '이서현', '이성훈', '이세훈', '이태검', '장휘정', '정기민', '최수빈', '최원영', '최민준', '유태승', '홍민화'];
+export const fixedPair = ['이동재', '박세은'];
+export const participants = [...randomParticipants, ...fixedPair];
+
+export function drawEvent() {
+  return [...draw(randomParticipants), ...fixedPair.map((sender, index) => ({
+    sender, recipient: fixedPair[1 - index], photo: null, specialExchange: true,
+  }))];
+}
 
 export function draw(names) {
   if (names.length < 3 || new Set(names).size !== names.length) throw new Error('At least three unique participants required');
